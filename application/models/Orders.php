@@ -39,32 +39,49 @@ class Orders extends CI_Model {
         }
     }
 
-    public function receipt() 
+    public function updateRecipes($which=null){
+        if ($which == null){
+            return;
+        }
+
+        $menu = $this->recipes->get($which);
+        $val = $menu->unit - 1;
+        $record = array(
+                   'id' => $menu->id,
+                   'name' => $menu->name,
+                   'description' => $menu->description,
+                   'price' => $menu->price,
+                   'unit' => $val
+                  );
+        $this->recipes->update($record);
+    }
+
+    public function receipt($which=null) 
     {
         $total = 0;
         $result = $this->data['pagetitle'] . '  ' . PHP_EOL;
         $result .= date(DATE_ATOM) . PHP_EOL;
         $result .= PHP_EOL . 'Your Order:'. PHP_EOL . PHP_EOL;
+        $result .= PHP_EOL . '<h1>' . $which . '</h1>'. PHP_EOL . PHP_EOL;
         foreach($this->items as $key => $value) {
             $recipes = $this->recipes->get($key);
             $result .= '- ' . $value . ' ' . $recipes->name . PHP_EOL;
             $total += $value * $recipes->price;
         }
-        $result .= PHP_EOL . 'Total: $' . number_format($total, 2) . PHP_EOL;
+        $result .= PHP_EOL . 'Total: ' . number_format($total, 2) . ' cents' . PHP_EOL;
         return $result;
     }
 
-    // test for at least one menu item in each category
     public function validate() 
     {
         // assume no items in each category
         foreach($this->recipes->all() as $id => $recipes)
             $found[$recipes->id] = false;
         // what do we have?
-        foreach($this->items as $code => $item) {
+        /*foreach($this->items as $code => $item) {
             $menuitem = $this->recipes->get($code);
             $found[$menuitem->recipes] = true; 
-        }
+        }*/
         // if any categories are empty, the order is not valid
         foreach($found as $cat => $ok)
             if (! $ok) return false;
@@ -95,6 +112,7 @@ class Orders extends CI_Model {
             $lineitem->addChild('code',$key);
             $lineitem->addChild('qty',$value);
         }
+        $xml->addChild('total',$this->total());
 
         // save it
         $xml->asXML('../data/order' . $this->number . '.xml');
@@ -108,6 +126,16 @@ class Orders extends CI_Model {
             $total += $value * $menu->price;
         }
         return $total;
-    }  
+    }
+
+    public function totalCostToProduce()
+    {
+        $total = 0;
+        foreach($this->items as $key => $value) {
+            $menu = $this->recipes->get($key);
+            $total += $value * $menu->price * 0.8;
+        }
+        return $total;
+    }
 
 }

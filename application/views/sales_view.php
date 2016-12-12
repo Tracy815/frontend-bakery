@@ -47,17 +47,17 @@
         <div class="row">  
             <div class='col-md-9'>
                 {items}
-            </div> 
+            </div>
             <div class='col-md-3'>
                 <div class="row">
                     {receipt}
                 </div>
                 <div class="row">
-                    <a class="btn btn-primary btn-default" role="button" href="/Sales/checkout">Checkout</a>
+                    <a class="btn btn-primary" role="button" href="/Sales/checkout">Checkout</a>
                     <a class="btn btn-default" role="button" href="/Sales/cancel">Cancel This Order</a>
                 </div>
             </div>       
-        </div>      
+        </div>
     {content}
     </div>
     <!-- /#page-wrapper -->

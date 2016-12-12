@@ -7,13 +7,38 @@ Team members:
 @gerardng
 
 ## [2.0.0] - 2016-12-11
+- Completed and released for assignment 2
+
+### Added 2016-12-11
+- Add, edit and delete functions for supplies and recipes @gerardng
+- Added reset buttons for funds and log transactions @gerardng
+
+### Changed 2016-12-10
+- Receiving page forms properly adding up to inventory quantity @gerardng
+- Added prepare function to convert receiving inventory into on-hand quantity @gerardng
+- Rewrite the production feature @AlexandyZ
+
+### Changed 2016-12-09
+- fixed Receiving page properly connecting to Supplies table in backend DB @gerardng
+- updated database values to align with units @New3
+
+### Changed - 2016-12-08
+- redesigned Home page to track capital, total sales, ingredients consumed, receiving orders @gerardng
+- Delete the productions model and create Recipe_supply model instead @AlexandyZ
+
+### Added - 2016-12-07
+- Separated front & backend features @AlexandyZ @New3
+- Remodeled database @AlexandyZ
+- Implemented tracking of store money @gerardng
+
 ### Added - 2016-12-04
 - Added user-role function in using Toggle controller @gerardng
 - Gated Receiving, Production, Sales to only admit admin roles @gerardng
 - Refactored navigation bar to use navbar.php as view @gerardng
 - Deleted unused files such as _menubar.php and _template.php @gerardng
 - Added Administrator controller @New3
-- Added Administrator_receiving_view and Administrator_inventory_view @New3
+- Added Administrator_receiving_view and Administrator_receiving-edit_view @New3
+- Added CRUD functions for controllers @New3
 
 ### Changed - 2016-12-03
 - Modified Receiving controller , added CRUD functional @New3

@@ -1,13 +1,9 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: kwanc
- * Date: 2016-12-04
- * Time: 7:02 PM
- */
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-// Menu Model + Crud Controller
+/**
+ * Admin controller with CRUD functions to interact with both frontend and backend database through REST calls
+ */
 class Administrator extends Application
 {
     function __construct()
@@ -15,13 +11,11 @@ class Administrator extends Application
         parent::__construct();
         $this->load->helper('formfields_helper');
         $this->error_messages = array();
+        $this->data['pagetitle'] = 'Administrator';
     }
 
     /**
-     * Receiving Page for this controller.
-     *
-     * Maps to the following URL
-     * http://example.com/welcome/receiving
+     * Renders the admin page view and the models
      */
     public function index()
     {
@@ -34,62 +28,90 @@ class Administrator extends Application
             return;
         }
 
-
-        // build the list of items, to pass on to our view
-        /*$source = $this->supplies->all();
-        $items = array ();
-        foreach ($source as $record)
-        {
-            $items[] = array ('name' => $record['name'], 'receiving' => $record['receiving'],  'href' => $record['where']);
-        }*/
         // this is the view we want shown
-        $this->data['pagebody'] = 'administrator_receiving_view';
-        $this->data['items'] = $this->supplies->all();
+        $this->data['pagebody'] = 'administrator_view';
+        $this->data['supplyItems'] = $this->supplies->all();
+        $this->data['recipeItems'] = $this->recipes->all();
         $this->render();
     }
 
-    function edit($id = null)
+    /**
+     * Edit a supply
+     * When code is null, a new supply is being added
+     * @param $id Supply id to edit
+     */
+    function editSupplies($id = null)
     {
-
         // try the session first
         $key = $this->session->userdata('key');
         $record = $this->session->userdata('record');
-
 
         if(empty($record)){
             $record = $this->supplies->get($id);
             $key = $id;
             $this->session->set_userdata('key',$id);
             $this->session->set_userdata('record',$record);
-
         }
-        //$this->data['content'] = "Looking at " . $key . ': ' . $record->name;
+
         $this->data['action'] = (empty($key)) ? 'Adding' : 'Editing';
         // build the form fields
-        // $this->data['items'] = $this->supplies->get($id);
-
-        $this->data['fid'] = makeLaBel('Id', 'id', $record->id);
-        //$this->data['fid']=$this->supplies->get($record->name);
-        $this->data['fname'] = makeTextField('Name', 'name', $record->name);
-        $this->data['fonhand'] = makeTextField('On Hand amount, each', 'qty_onhand', $record->qty_onhand);
-        $this->data['freceiving'] = makeTextField('Receiving amount, each', 'qty_inventory', $record->qty_inventory);
-        $this->data['fprice'] = makeLaBel('Price, each', 'price', $record->price);
-
-
+        // makeTextField (Label, database column name, record to insert)
+        // disabled field => makeLaBel (Label, database column name, record to insert)
+        $this->data['fid'] = makeLaBel('Item Id', 'id', $record->id);
+        $this->data['fname'] = makeTextField('Item Name', 'name', $record->name);
+        $this->data['fonhand'] = makeTextField('On Hand amount, units (g)', 'qty_onhand', $record->qty_onhand);
+        $this->data['freceiving'] = makeTextField('Receiving amount, units (g)', 'qty_inventory', $record->qty_inventory);
+        $this->data['fprice'] = makeTextField('Price (cent), per unit', 'price', $record->price);
 
         // show the editing form
-        $this->data['pagebody'] = "administrator_inventory_view";
+        $this->data['pagebody'] = "administrator_supplies-edit_view";
+        //this is called when submit button is click ,make submit button
         $this->data['zsubmit'] = makeSubmitButton('Save', 'Submit changes');
         $this->show_any_errors();
         $this->render();
     }
+
+    /**
+     * Add a supply
+     * When code is null, a new supply is being added
+     * @param $id Supply id to add
+     */
+    function newSupplies()
+    {
+
+        $this->data['action'] = (empty($key)) ? 'Adding' : 'Editing';
+        // build the form fields
+        // makeTextField (Label, database column name, record to insert)
+        // disabled field => makeLaBel (Label, database column name, record to insert)
+        $this->data['fid'] = makeTextField('Item Id', 'id', '');
+        $this->data['fname'] = makeTextField('Item Name', 'name', '');
+        $this->data['fonhand'] = makeTextField('On Hand amount, units (g)', 'qty_onhand', '');
+        $this->data['freceiving'] = makeTextField('Receiving amount, units (g)', 'qty_inventory', '');
+        $this->data['fprice'] = makeTextField('Price (cent), per unit', 'price', '');
+
+        // show the editing form
+        $this->data['pagebody'] = "administrator_supplies-add_view";
+        //this is called when submit button is click ,make submit button
+        $this->data['zsubmit'] = makeSubmitButton('Add', 'Submit changes');
+        $this->show_any_errors();
+        $this->render();
+    }
+
+    /**
+     * Called when cancel button is click, cancel the transection on editing form
+     */
     function cancel()
     {
         $this->session->unset_userdata('key');
         $this->session->unset_userdata('record');
         $this->index();
     }
-    function save() {
+
+    /**
+     * Called when save button is click, save contents on editing form to database
+     */
+    function saveSupplies()
+    {
         // try the session first
         $key = $this->session->userdata('key');
         $record = $this->session->userdata('record');
@@ -108,7 +130,7 @@ class Administrator extends Application
 
         // validate
         $this->load->library('form_validation');
-        $this->form_validation->set_rules($this->supplies->rules());
+        $this->form_validation->set_rules($this->supplies->adminSupplyRules());
         if ($this->form_validation->run() != TRUE)
             $this->error_messages = $this->form_validation->error_array();
 
@@ -116,12 +138,10 @@ class Administrator extends Application
         if ($key == null)
             if ($this->supplies->exists($record->id))
                 $this->error_messages[] = 'Duplicate id adding new menu item';
-        /* if (! $this->categories->exists($record->category))
-             $this->error_messages[] = 'Invalid category code: ' . $record->category;*/
 
         // save or not
         if (! empty($this->error_messages)) {
-            $this->edit();
+            $this->editSupplies();
             return;
         }
 
@@ -130,10 +150,65 @@ class Administrator extends Application
             $this->supplies->add($record);
         else
             $this->supplies->update($record);
+
+        // unset session variables
+        $this->session->unset_userdata('key');
+   		$this->session->unset_userdata('record');
+
         // and redisplay the list
         $this->index();
     }
 
+    /**
+     * Called when add button is clicked, add contents as a new row to the database
+     */
+    function addSupplies()
+    {
+        // update our data transfer object
+        $incoming = $this->input->post();
+        //var_dump($incoming);
+        // validate
+        $this->load->library('form_validation');
+        $this->form_validation->set_rules($this->supplies->adminSupplyRules());
+        if ($this->form_validation->run() != TRUE)
+            $this->error_messages = $this->form_validation->error_array();
+
+        // add or not
+        if (! empty($this->error_messages)) {
+            $this->newSupplies();
+            return;
+        }
+
+        // add to our table, finally!
+        $this->supplies->add($incoming);
+
+        // and redisplay the list
+        $this->index();
+    }
+
+
+    //add new items to database
+    function addNewItem() {
+        // Handle user-role to lock out certain types of users
+        $userrole = $this->session->userdata('userrole');
+        if ($userrole == 'guest') {
+            $message = 'You are not authorized to access this page. Go away';
+            $this->data['content'] = $message;
+            $this->render();
+            return;
+        }
+
+        $key = NULL;
+        //create a new item
+        $record = $this->supplies->create();
+        $this->session->set_userdata('key', $key);
+        $this->session->set_userdata('record', $record);
+        $this->editSupplies();
+    }
+
+    /**
+     * Shows any errors as alert boxes if any are accumulated
+     */
     function show_any_errors() {
         $result = '';
         if (empty($this->error_messages)) {
@@ -147,20 +222,12 @@ class Administrator extends Application
         $this->data['error_messages'] = $this->parser->parse('mtce-errors',
             ['error_messages' => $result], true);
     }
-    function delete() {
-        $key = $this->session->userdata('key');
-        $record = $this->session->userdata('record');
-        // only delete if editing an existing record
-        if (! empty($record)) {
-            $this->supplies->delete($key);
-        }
+
+    /**
+     * Deletes a row from the database
+     */
+    function deleteSupply($id = null) {
+        $this->supplies->delete($id);
         $this->index();
-    }
-    function add() {
-        $key = NULL;
-        $record = $this->supplies->create();
-        $this->session->set_userdata('key', $key);
-        $this->session->set_userdata('record', $record);
-        $this->edit();
     }
 }
